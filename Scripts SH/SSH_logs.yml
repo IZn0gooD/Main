@@ -1,0 +1,15 @@
+- name: Exec Netstat
+  hosts: all
+  tasks:
+    - name: SSH connections
+      shell: netstat -anultp | grep ":22 "
+      register: netstat_result
+  
+    - name: Affichage du resultat 
+      debug:
+        var: netstat_result.stdout_lines
+
+          #- name: Enregistrer fichier
+          #copy:
+          #content: "{{netstat_result.stdout_lines | join('\n')}}"
+          #dest: /home/user/results_netstat.txt

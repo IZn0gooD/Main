@@ -1,0 +1,13 @@
+﻿vm_name;ip_addr;roles;base
+# serveurs
+srv01;192.168.10.1;DNS,dhcp,AD-Domain-Services,WINS;base_2016_FR_G2_eval_sysprep_rep_gui.vhdx
+srv02;192.168.10.2;DNS,dhcp,AD-Domain-Services,WINS;base_2016_FR_G2_eval_sysprep_rep_gui.vhdx
+#srv03;192.168.10.3;DNS,dhcp,AD-Domain-Services,WINS;base_2016_FR_G2_eval_sysprep_rep_gui.vhdx
+#srv04;192.168.10.4;DNS,dhcp,AD-Domain-Services,WINS;base_2016_FR_G2_eval_sysprep_rep_gui.vhdx
+#
+# clients 21H1
+cli01;192.168.10.101;;base_wi10_FR_G2_21H1_sysprep_rep.vhdx
+#cli02;192.168.10.102;;base_wi10_FR_G2_21H1_sysprep_rep.vhdx
+
+
+

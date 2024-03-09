@@ -1,0 +1,16 @@
+Powershell 
+on a la version 64 bits et 32 bits
+
+Les objects ils en existent déjà et ils sont définis dans des frameworks
+quand on créer une fenêtre par exemple avec le framework dotnet on ne va pas définir toutes les propriétes de la fenêtre puisque l'object existe déjà
+
+un object est composé d'un assemblie
+
+WMI objects = 
+logiciel utile = wmi explorer
+ Get-WmiObject win32_service
+Get-WmiObject win32_directory
+Get-WmiObject win32_devicebus
+Get-WmiObject win32_desktop
+Get-WmiObject win32_diskdrive
+Get-WmiObject win32_IP4RouteTable
