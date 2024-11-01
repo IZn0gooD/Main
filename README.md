@@ -12,7 +12,7 @@ Discord Minecraft Server Bot is a discord bot whose purpose is to look at a mine
 
 ## Installation
 1. Clone the repository: `git clone https://github.com/IZn0gooD/Main/tree/Discord-Minecraft-Server-Bot.git`
-2. Install the dependencies: `sudo apt install python3 python3-pip screen`
+2. Install the dependencies: `sudo apt install python3 python3-pip python3-venv screen`
 3. Setup the env: `python3 -m venv env`
 4. Activate the env `source env/bin/activate`
 5. Install the discord python package `pip install discord.py`
