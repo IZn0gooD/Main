@@ -1,8 +1,9 @@
 # Discord Minecraft Server Bot
 
 ## Description
-Discord Minecraft Server Bot is a discord bot whose purpose is to look at a minecraft server instance, check whether it is running or not and turn it on or off accordingly.  
+Discord Minecraft Server Bot is a discord bot whose purpose is to look at a minecraft server instance, check whether it is running or not and turn it on or off accordingly. 
 
+⚠️ An account called “minecraft” is required in the instance on which you're going to run the bot. Otherwise adapt the shell scripts to your liking. ⚠️
 ## Features
 - Discord command "!minecraft"
 - Script write in shell to check server status
