@@ -1,0 +1,7 @@
+Prenom;Nom;Fonction;Groupe;OU;
+Gérard;Mensoif;Directeur;Direction;OU=Direction,OU=Utilisateurs,DC=test,DC=fr
+Sophie;Fonfek;Secrétaire;Direction;OU=Direction,OU=Utilisateurs,DC=test,DC=fr
+Juda;Nanas;Secrétaire;Compta;OU=Compta,OU=Utilisateurs,DC=test,DC=fr
+Cécile;Ourkessa;Secrétaire;Compta;OU=Compta,OU=Utilisateurs,DC=test,DC=fr
+John;Doeuf;Technicien;IT;OU=IT,OU=Utilisateurs,DC=test,DC=fr
+Jérémie;Lebourd;Technicien;IT;OU=IT,OU=Utilisateurs,DC=test,DC=fr

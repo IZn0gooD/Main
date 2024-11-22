@@ -1,0 +1,146 @@
+﻿<style>
+    /* Style de base pour la page */
+    body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background: linear-gradient(0deg, #006dd4 40%, #feaf26 100%);
+        background-size: cover;
+        font-family: 'Arial', sans-serif;
+        margin: 20px;
+    }
+
+    h1 {
+        color: white;
+        text-align: center;
+        list-style: circle inside;
+    }
+
+    h3 {
+        color: #333;
+        background-color: #f5f5f5;
+        padding: 10px;
+        border: 1px solid #ddd;
+    }
+
+    h4 {
+        margin-bottom: 5px;
+        color: whitesmoke;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        color: aliceblue;
+    }
+
+    td {
+        border-bottom: 1px solid #ddd;
+        padding: 15px;
+        text-align: left;
+        overflow-wrap: break-word;
+        border: 1px solid #ddd;
+        position: relative;
+        overflow: hidden;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    td::before {
+        content: "";
+        position: absolute;
+        left: -5px;
+        right: -5px;
+        bottom: 0;
+        height: 4px;
+        background-color: #FFEB3B;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.7s ease;
+    }
+
+    td:hover {
+        background-color: #fff;
+        color: #333;
+    }
+
+    td:hover::before {
+        transform: scaleX(1);
+        transform-origin: right;
+    }
+</style>
+<h1>Bulletin de Santé</h1>
+<h3>Catégorie 1 : Activité de la carte d’interface réseau physique(*)</h3>
+<h4>Transitions vers faible consommation d’énergie (vie entière)</h4>
+<table><tr>
+    <td>\\laptop-19\activité de la carte d’interface réseau physique(intel(r) ethernet connection (4) i219-lm)\transitions vers faible consommation d’énergie (vie entière)</td>
+    <td>12</td>
+</tr></table>
+<h3>Catégorie 2 : Activité du disque système de fichiers(*)</h3>
+<h4>Octets écrits par le système de fichiers</h4>
+<table><tr>
+    <td>\\laptop-19\activité du disque système de fichiers(default)\octets écrits par le système de fichiers</td>
+    <td>12310.3593056068</td>
+</tr><tr>
+    <td>\\laptop-19\activité du disque système de fichiers(_total)\octets écrits par le système de fichiers</td>
+    <td>12310.3593056068</td>
+</tr></table>
+<h4>Octets lus par le système de fichiers</h4>
+<table><tr>
+    <td>\\laptop-19\activité du disque système de fichiers(default)\octets lus par le système de fichiers</td>
+    <td>64839.6032096474</td>
+</tr><tr>
+    <td>\\laptop-19\activité du disque système de fichiers(_total)\octets lus par le système de fichiers</td>
+    <td>64839.6032096474</td>
+</tr></table>
+<h3>Catégorie 3 : BitLocker(*)</h3>
+<h3>Catégorie 4 : Carte réseau(*)</h3>
+<h4>Total des octets/s</h4>
+<table><tr>
+    <td>\\laptop-19\carte réseau(intel[r] ethernet connection [4] i219-lm)\total des octets/s</td>
+    <td>16339.4591812919</td>
+</tr><tr>
+    <td>\\laptop-19\carte réseau(hyper-v virtual ethernet adapter)\total des octets/s</td>
+    <td>215.408932119112</td>
+</tr><tr>
+    <td>\\laptop-19\carte réseau(hyper-v virtual ethernet adapter _2)\total des octets/s</td>
+    <td>215.408932119112</td>
+</tr></table>
+<h4>Paquets/s</h4>
+<table><tr>
+    <td>\\laptop-19\carte réseau(intel[r] ethernet connection [4] i219-lm)\paquets/s</td>
+    <td>196.555692376316</td>
+</tr><tr>
+    <td>\\laptop-19\carte réseau(hyper-v virtual ethernet adapter)\paquets/s</td>
+    <td>0.987717047117165</td>
+</tr><tr>
+    <td>\\laptop-19\carte réseau(hyper-v virtual ethernet adapter _2)\paquets/s</td>
+    <td>0.987717047117165</td>
+</tr></table>
+<h4>Paquets reçus/s</h4>
+<table><tr>
+    <td>\\laptop-19\carte réseau(intel[r] ethernet connection [4] i219-lm)\paquets reçus/s</td>
+    <td>34.642712385809</td>
+</tr></table>
+<h4>Paquets envoyés/s</h4>
+<table><tr>
+    <td>\\laptop-19\carte réseau(intel[r] ethernet connection [4] i219-lm)\paquets envoyés/s</td>
+    <td>11.9836806237266</td>
+</tr></table>
+<h4>Bande passante actuelle</h4>
+<table><tr>
+    <td>\\laptop-19\carte réseau(intel[r] ethernet connection [4] i219-lm)\bande passante actuelle</td>
+    <td>1000000000</td>
+</tr><tr>
+    <td>\\laptop-19\carte réseau(hyper-v virtual switch extension adapter)\bande passante actuelle</td>
+    <td>10000000000</td>
+</tr><tr>
+    <td>\\laptop-19\carte réseau(hyper-v virtual ethernet adapter)\bande passante actuelle</td>
+    <td>10000000000</td>
+</tr><tr>
+    <td>\\laptop-19\carte réseau(hyper-v virtual switch extension adapter _2)\bande passante actuelle</td>
+    <td>10000000000</td>
+</tr><tr>
+    <td>\\laptop-19\carte réseau(hyper-v virtual ethernet adapter _2)\bande passante actuelle</td>
+    <td>10000000000</td>
+</tr></table>
+<h3>Catégorie 5 : Partages de clients SMB(*)</h3>
