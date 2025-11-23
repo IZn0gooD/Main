@@ -1,32 +1,42 @@
-# Test Lecteur Vidéo Electron
+# Valorant Team Manager
 
-Projet de test pour vérifier que le lecteur vidéo en arrière-plan fonctionne correctement dans Electron.
+Application Electron pour gérer votre équipe Valorant avec statistiques détaillées et suivi de progression.
+
+## Fonctionnalités
+
+- 🏠 **Page d'accueil** : Vue d'ensemble de l'équipe avec statistiques rapides
+- 👥 **Gestion des joueurs** : Ajout, modification et suppression de joueurs avec leurs agents, rôles et rangs
+- 📊 **Gestion des matchs** : Suivi des matchs avec détails des rounds (gagnant, côté, type, notes)
+- 📈 **Statistiques** : 
+  - Statistiques par map
+  - Statistiques détaillées des rounds (par type et par côté)
+  - Graphiques interactifs (Plotly.js) :
+    - Graphique des victoires/défaites
+    - Performance par map
+    - Statistiques des rounds
+    - Évolution temporelle
+    - Utilisation des agents
+- 🎯 **Progression personnelle** : Suivi détaillé de vos performances avec analyse des points positifs/négatifs
+- 🎯 **Agents par map** : Configuration des agents que chaque joueur connaît pour chaque map
 
 ## Installation
 
+1. Installer les dépendances :
 ```bash
 npm install
 ```
 
-## Utilisation
-
-1. Placez un fichier vidéo nommé `background.mp4` dans le dossier `assets/`
-2. Lancez l'application :
-
+2. Lancer l'application :
 ```bash
 npm start
 ```
 
-## Structure
+## Build
 
-- `main.js` : Processus principal Electron avec le protocole personnalisé `app://`
-- `index.html` : Interface avec la vidéo en arrière-plan
-- `assets/background.mp4` : Fichier vidéo à placer ici
+Pour créer un exécutable Windows :
 
-## Vérification
+```bash
+npm run build:win
+```
 
-La console développeur s'ouvre automatiquement pour afficher les logs. Vérifiez :
-- Si le protocole `app://` est bien enregistré
-- Si la vidéo se charge correctement
-- Les messages d'erreur éventuels
-
+Les fichiers seront générés dans le dossier `dist/`.
