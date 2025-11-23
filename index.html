@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valorant Team Manager</title>
+    <base href="./">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' app: file:; script-src 'self' https://cdn.plot.ly https://cdn.jsdelivr.net 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: app: file:; media-src app: file: data:; font-src 'self' data:; connect-src 'self' https://cdn.plot.ly https://cdn.jsdelivr.net https://*.api.riotgames.com data: blob:; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src 'none'; object-src 'none'">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <!-- Modules modulaires -->
+    <script src="js/models/Round.js"></script>
+    <script src="js/models/Player.js"></script>
+    <script src="js/models/Match.js"></script>
+    <script src="js/models/Team.js"></script>
+    <script src="js/utils/constants.js"></script>
+    <script src="js/services/StorageService.js"></script>
+    <script src="js/services/NotificationService.js"></script>
+    <script src="js/services/ExportService.js"></script>
+    <script src="js/services/ThemeService.js"></script>
+    <script src="js/services/ResourceLoader.js"></script>
+    <script src="js/services/ValidationService.js"></script>
+    <script src="js/services/SearchService.js"></script>
+    <script src="js/services/BackupService.js"></script>
+    <script src="js/services/EncryptionService.js"></script>
+    <script src="js/services/KeyboardService.js"></script>
+    <!-- Utils UI -->
+    <script src="js/utils/validators.js"></script>
+    <script src="js/utils/formatters.js"></script>
+    <!-- Modules UI -->
+    <script src="js/ui/tabs.js"></script>
+    <script src="js/ui/statistics.js"></script>
+    <script src="js/ui/modals.js"></script>
+    <script src="js/ui/charts.js"></script>
+</head>
+<body>
+    <!-- Vidéo de fond en boucle -->
+    <video id="background-video" muted autoplay loop playsinline>
+        <source src="app://assets/background.mp4" type="video/mp4">
+    </video>
+    <div class="container">
+        <!-- Barre d'outils -->
+        <div class="toolbar" id="toolbar">
+            <div class="toolbar-group">
+                <span class="toolbar-label" id="teamNameLabel">Équipe: <strong id="teamName">Chargement...</strong></span>
+            </div>
+            <div class="toolbar-group">
+                    <button class="toolbar-btn-icon" id="profileBtn" title="Profiling Performance">🧪</button>
+                <button class="toolbar-btn-icon" id="profilesBtn" title="Profils">👤</button>
+                <button class="toolbar-btn-icon" id="backupBtn" title="Gérer les sauvegardes">💾</button>
+                <button class="toolbar-btn-icon" id="overlayBtn" title="Mode Overlay (Ctrl+Shift+O)">🖥️</button>
+                <button class="toolbar-btn-icon" id="reportBtn" title="Générer un rapport HTML">📄</button>
+                    <button class="toolbar-btn-icon" id="securityBtn" title="Sécurité (chiffrement)">🔒</button>
+                <button class="toolbar-btn-icon" id="ocrBtn" title="Importer via OCR (Scoreboard)">🧠</button>
+                <button class="toolbar-btn-icon" id="notificationSettingsBtn" title="Préférences de notifications">🔔</button>
+                <button class="toolbar-btn-icon" id="alertsHistoryBtn" title="Journal d’alertes">📢</button>
+                <button class="toolbar-btn-icon" id="metricsBtn" title="Métriques d’usage">📈</button>
+                <button class="toolbar-btn-icon" id="logsBtn" title="Journal des événements">🧾</button>
+                <button class="toolbar-btn-icon" id="shortcutsBtn" title="Raccourcis clavier (?)">⌨️</button>
+                <button class="toolbar-btn-icon" id="themeBtn" title="Personnaliser le thème">🎨</button>
+                <button class="toolbar-btn-icon" id="filePathBtn" title="Gérer le chemin du fichier d'équipe">📂</button>
+            </div>
+        </div>
+
+            <!-- Onglets -->
+            <div class="tabs-container" id="tabsContainer">
+                <button class="tab-btn" data-tab="tutorials">📘 Tutoriels</button>
+                <button class="tab-btn active" data-tab="home">🏠 Home</button>
+                <button class="tab-btn" data-tab="api">🛠️ API</button>
+                <button class="tab-btn" data-tab="players">👥 Joueurs</button>
+                <button class="tab-btn" data-tab="matches">📊 Matchs</button>
+                <button class="tab-btn" data-tab="statistics">📈 Statistiques</button>
+                <button class="tab-btn" data-tab="progression">🎯 Progression</button>
+                <button class="tab-btn" data-tab="strategy">🧠 Stratégie</button>
+                <button class="tab-btn" data-tab="comparison">⚖️ Comparaison</button>
+            </div>
+
+        <!-- Contenu des onglets -->
+        <div class="content-area">
+            <!-- Onglet Tutoriels -->
+            <div class="tab-content" id="tutorialsTab">
+                <div class="hero">
+                    <div class="hero-content">
+                        <h1 class="home-title">Bienvenue dans <span id="homeTeamName">Nouvelle Equipe</span></h1>
+                        <p class="tab-description">Découvrez rapidement comment configurer votre équipe, saisir vos matchs et analyser vos performances.</p>
+                        <div id="tutorialsContent"></div>
+                    </div>
+                    <div class="hero-aside">
+                        <div class="logo-container" id="logoContainer">
+                            <div class="logo-placeholder"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Home -->
+            <div class="tab-content active" id="homeTab">
+                <!-- Message si aucune équipe n'est chargée -->
+                <div id="noTeamMessage" class="card" style="display: none; max-width: 600px; margin: 50px auto; text-align: center; padding: 40px;">
+                    <h2 style="color: var(--accent-color); margin-bottom: 20px;">⚙️ Aucune équipe chargée</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 30px; line-height: 1.6;">
+                        Pour commencer, veuillez charger un fichier d'équipe existant (format JSON).
+                        <br>Si vous n'avez pas encore de fichier d'équipe, vous pouvez en créer un nouveau.
+                    </p>
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn-primary" id="loadTeamFileBtn">📁 Charger un fichier d'équipe</button>
+                        <button class="btn-secondary" id="createNewTeamBtn">➕ Créer une nouvelle équipe</button>
+                    </div>
+                </div>
+                
+                <div class="home-container" id="homeContainer" style="display: none;">
+                    <div class="home-left">
+                        <h1 class="home-title" id="homeTitle">Welcome to <span id="homeTeamName">Valorant Team Manager</span></h1>
+                        <div class="team-info" id="teamInfo">
+                            <p>🎮 Équipe: <span id="infoTeamName">-</span></p>
+                            <p>👥 Joueurs: <span id="infoPlayersCount">0</span></p>
+                            <p>📊 Matchs joués: <span id="infoMatchesCount">0</span></p>
+                            <p>🏆 Victoires: <span id="infoVictories">0</span> (<span id="infoWinrate">0</span>%)</p>
+                            <p>❌ Défaites: <span id="infoDefeats">0</span> (<span id="infoLossrate">0</span>%)</p>
+                        </div>
+                        <p class="home-subtitle">Gérez votre équipe comme un pro</p>
+                        <div class="quick-stats" id="quickStats"></div>
+                    </div>
+                    <div class="home-right">
+                        <div class="logo-container" id="logoContainer">
+                            <div class="logo-placeholder"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet API -->
+            <div class="tab-content" id="apiTab">
+                <h2 class="tab-title">🛠️ Riot API (officielle)</h2>
+                <div class="card">
+                    <div class="form-row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                        <label>Clé API:</label>
+                        <input type="password" id="riotApiKeyInput" class="input-field" placeholder="X-Riot-Token">
+                        <button class="btn-secondary" id="saveRiotApiKeyBtn">💾 Sauver</button>
+                        <button class="btn-secondary" id="testRiotApiBtn">🔌 Tester</button>
+                        <span class="muted" id="riotApiStatus"></span>
+                    </div>
+                    <div class="form-row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:8px;">
+                        <label>Contenu (region):</label>
+                        <select id="riotContentRegion">
+                            <option value="eu">eu</option><option value="na">na</option><option value="ap">ap</option>
+                            <option value="kr">kr</option><option value="latam">latam</option><option value="br">br</option>
+                        </select>
+                        <label>Status (plateforme):</label>
+                        <select id="riotPlatform">
+                            <option value="eu1">eu1</option><option value="na1">na1</option><option value="ap1">ap1</option>
+                            <option value="kr1">kr1</option><option value="latam1">latam1</option><option value="br1">br1</option>
+                        </select>
+                        <label>Accounts (host):</label>
+                        <select id="riotAccountHost">
+                            <option value="europe">europe</option>
+                            <option value="americas">americas</option>
+                            <option value="asia">asia</option>
+                        </select>
+                        <label>Endpoint:</label>
+                        <select id="riotEndpoint">
+                            <option value="contents">VAL-CONTENT: contents</option>
+                            <option value="agents">VAL-CONTENT: agents</option>
+                            <option value="maps">VAL-CONTENT: maps</option>
+                            <option value="status">VAL-STATUS: platform-data</option>
+                            <option value="matchIdsByPuuid">VAL-MATCH: match IDs by PUUID</option>
+                            <option value="matchById">VAL-MATCH: match by ID</option>
+                            <option value="accountByRiotId">ACCOUNT: by Riot ID</option>
+                            <option value="accountByPuuid">ACCOUNT: by PUUID</option>
+                        </select>
+                        <input type="text" id="riotPuuidInput" class="input-field" placeholder="PUUID (pour match IDs)" style="min-width:280px; display:none;">
+                        <input type="text" id="riotMatchIdInput" class="input-field" placeholder="matchId (pour match by ID)" style="min-width:280px; display:none;">
+                        <input type="text" id="riotGameNameInput" class="input-field" placeholder="gameName (Riot ID)" style="min-width:200px; display:none;">
+                        <input type="text" id="riotTagLineInput" class="input-field" placeholder="tagLine (Riot ID)" style="min-width:120px; display:none;">
+                        <label id="riotLangLabel" style="display:none;">Lang:</label>
+                        <select id="riotLangSelect" style="display:none;">
+                            <option value="en-US">en-US</option>
+                            <option value="fr-FR" selected>fr-FR</option>
+                            <option value="de-DE">de-DE</option>
+                            <option value="es-ES">es-ES</option>
+                            <option value="it-IT">it-IT</option>
+                            <option value="pt-BR">pt-BR</option>
+                            <option value="ja-JP">ja-JP</option>
+                            <option value="ko-KR">ko-KR</option>
+                            <option value="zh-CN">zh-CN</option>
+                        </select>
+                        <label id="riotStartLabel" style="display:none;">start:</label>
+                        <input type="number" id="riotStartInput" class="input-field" value="0" min="0" style="width:90px; display:none;">
+                        <label id="riotCountLabel" style="display:none;">count:</label>
+                        <input type="number" id="riotCountInput" class="input-field" value="10" min="1" max="100" style="width:90px; display:none;">
+                        <button class="btn-primary" id="riotSendBtn">▶️ Exécuter</button>
+                        <button class="btn-secondary" id="riotExportJsonBtn">📤 Exporter JSON</button>
+                        <label class="muted" style="margin-left:8px;"><input type="checkbox" id="riotRawToggle"> Vue brute</label>
+                        <button class="btn-secondary" id="riotCopyCurlBtn">📋 Copier cURL</button>
+                        <button class="btn-secondary" id="riotPrevBtn" title="Page précédente" style="display:none;">◀️ Prev</button>
+                        <button class="btn-secondary" id="riotNextBtn" title="Page suivante" style="display:none;">Next ▶️</button>
+                        <button class="btn-primary" id="riotImportMatchBtn" title="Importer ce match" style="display:none;">⬇️ Importer le match</button>
+                        <button class="btn-secondary" id="riotApplyPuuidBtn" title="Appliquer le PUUID" style="display:none;">↪️ Appliquer PUUID</button>
+                        <button class="btn-primary" id="riotBulkImportBtn" title="Importer une liste d'IDs (match IDs par PUUID)" style="display:none;">⬇️ Importer les matchs (liste)</button>
+                    </div>
+                </div>
+                <div class="table-container" id="riotResultPretty" style="margin-top:12px;"></div>
+                <div class="table-container" id="riotResultContainer" style="margin-top:12px; max-height:50vh; overflow:auto; display:none;"></div>
+                <div class="muted" id="riotRateInfo" style="margin-top:6px;"></div>
+                <div class="card" style="margin-top:12px;">
+                    <h3 style="margin-bottom:8px;">Historique des requêtes</h3>
+                    <div id="riotHistory" class="table-container" style="max-height:30vh; overflow:auto;"></div>
+                </div>
+            </div>
+            <!-- Onglet Stratégie -->
+            <div class="tab-content" id="strategyTab">
+                <h2 class="tab-title">🧠 Stratégie</h2>
+                <div class="strategy-tabs">
+                    <button class="strategy-tab-btn active" data-strategy-tab="valoplants">🎯 Valoplants</button>
+                    <button class="strategy-tab-btn" data-strategy-tab="antistrat">🛡️ Antistrat</button>
+                </div>
+
+                <!-- Sous-onglet Valoplants -->
+                <div class="strategy-sub-tab-content active" id="valoplantsSubTab">
+                    <div id="strategyContent">
+                        <div class="form-row" style="margin-bottom: 12px; gap: 10px; align-items: center;">
+                            <label for="strategyMapSelect">Map:</label>
+                            <select id="strategyMapSelect"></select>
+                            <label for="strategySideSelect">Side:</label>
+                            <select id="strategySideSelect">
+                                <option value="attack">⚔️ Attaque</option>
+                                <option value="defense">🛡️ Défense</option>
+                            </select>
+                            <input type="file" id="strategyImagesInput" accept="image/*" multiple style="display: none;">
+                            <button class="btn-primary upload-btn" id="openFilePickerBtn">📷 Importer des images</button>
+                            <div style="margin-left:auto; display:flex; gap:8px; flex-wrap:wrap;">
+                                <button class="btn-secondary" id="exportStrategyHtmlBtn">🖨️ Export Valoplants (HTML)</button>
+                                <button class="btn-primary" id="exportStrategyPdfBtn">🧾 Export Valoplants (PDF)</button>
+                            </div>
+                        </div>
+                        <div class="image-grid" id="strategyGallery"></div>
+                    </div>
+                </div>
+
+                <!-- Sous-onglet Antistrat -->
+                <div class="strategy-sub-tab-content" id="antistratSubTab">
+                    <div id="antistratContent">
+                        <!-- Liste des profils d'équipes adverses -->
+                        <div class="form-row" style="margin-bottom: 20px; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
+                            <h2 style="margin: 0;">🛡️ Profils Antistrat</h2>
+                            <button class="btn-primary" id="addAntistratTeamBtn">➕ Créer un profil</button>
+                        </div>
+
+                        <!-- Liste des équipes -->
+                        <div id="antistratTeamsList" style="display: grid; gap: 20px;">
+                            <!-- Les profils seront ajoutés dynamiquement -->
+                        </div>
+
+                        <!-- Profil sélectionné -->
+                        <div id="antistratProfileView" style="display: none;">
+                            <!-- En-tête du profil -->
+                            <div class="card" style="margin-bottom: 20px;">
+                                <div class="form-row" style="gap: 15px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
+                                    <div style="flex: 1; min-width: 250px;">
+                                        <label for="antistratTeamName">Nom de l'équipe:</label>
+                                        <input type="text" id="antistratTeamName" style="width: 100%; padding: 10px; border-radius: 6px; font-size: 16px; font-weight: bold;">
+                                    </div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button class="btn-secondary" id="closeAntistratProfileBtn">← Retour</button>
+                                        <button class="btn-danger" id="deleteAntistratTeamBtn">🗑️ Supprimer le profil</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Informations générales -->
+                            <div class="card" style="margin-bottom: 20px;">
+                                <h3 style="margin-top: 0;">📋 Informations générales</h3>
+                                <div style="margin-bottom: 20px;">
+                                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">🚫 Bans de maps (jusqu'à 5):</label>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                        <div>
+                                            <label for="antistratBan1" style="font-size: 12px; color: var(--text-secondary);">Ban 1:</label>
+                                            <select id="antistratBan1" style="width: 100%; margin-top: 4px;"></select>
+                                        </div>
+                                        <div>
+                                            <label for="antistratBan2" style="font-size: 12px; color: var(--text-secondary);">Ban 2:</label>
+                                            <select id="antistratBan2" style="width: 100%; margin-top: 4px;"></select>
+                                        </div>
+                                        <div>
+                                            <label for="antistratBan3" style="font-size: 12px; color: var(--text-secondary);">Ban 3:</label>
+                                            <select id="antistratBan3" style="width: 100%; margin-top: 4px;"></select>
+                                        </div>
+                                        <div>
+                                            <label for="antistratBan4" style="font-size: 12px; color: var(--text-secondary);">Ban 4:</label>
+                                            <select id="antistratBan4" style="width: 100%; margin-top: 4px;"></select>
+                                        </div>
+                                        <div>
+                                            <label for="antistratBan5" style="font-size: 12px; color: var(--text-secondary);">Ban 5:</label>
+                                            <select id="antistratBan5" style="width: 100%; margin-top: 4px;"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="antistratPreferredMap">🗺️ Map préférée:</label>
+                                    <select id="antistratPreferredMap" style="width: 100%; margin-top: 5px; max-width: 300px;"></select>
+                                </div>
+                            </div>
+
+                            <!-- Maps avec leurs antistrats -->
+                            <div id="antistratMapsContainer">
+                                <!-- Les maps seront ajoutées dynamiquement -->
+                            </div>
+
+                            <!-- Bouton pour ajouter une map -->
+                            <div style="margin-top: 20px; text-align: center;">
+                                <button class="btn-primary" id="addAntistratMapBtn">➕ Ajouter une map à ce profil</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal d'aperçu image stratégie -->
+            <div id="imagePreviewModal" class="modal">
+                <div class="modal-content" style="max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column;">
+                    <div class="modal-header">
+                        <h3>🖼️ Aperçu</h3>
+                        <button class="modal-close" id="imagePreviewClose">×</button>
+                    </div>
+                    <div class="modal-body" style="display: flex; justify-content: center; align-items: center;">
+                        <img id="imagePreview" src="" alt="Aperçu" style="max-width: 100%; max-height: 78vh; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal pour créer un profil antistrat -->
+            <div id="createAntistratProfileModal" class="modal">
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3>➕ Créer un profil antistrat</h3>
+                        <button class="modal-close" id="closeCreateAntistratProfileModal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="antistratTeamNameInput" style="display: block; margin-bottom: 10px; font-weight: 600;">Nom de l'équipe adverse:</label>
+                        <input type="text" id="antistratTeamNameInput" placeholder="Ex: DRX, Fnatic..." style="width: 100%; padding: 12px; border-radius: 6px; font-size: 16px; margin-bottom: 20px;" autofocus>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn-secondary" id="cancelCreateAntistratProfile">Annuler</button>
+                            <button class="btn-primary" id="confirmCreateAntistratProfile">Créer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal pour ajouter une map à un profil antistrat -->
+            <div id="addAntistratMapModal" class="modal">
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3>➕ Ajouter une map</h3>
+                        <button class="modal-close" id="closeAddAntistratMapModal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="antistratMapNameInput" style="display: block; margin-bottom: 10px; font-weight: 600;">Nom de la map:</label>
+                        <select id="antistratMapNameSelect" style="width: 100%; padding: 12px; border-radius: 6px; font-size: 16px; margin-bottom: 20px;"></select>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn-secondary" id="cancelAddAntistratMap">Annuler</button>
+                            <button class="btn-primary" id="confirmAddAntistratMap">Ajouter</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                <!-- Onglet Joueurs -->
+                <div class="tab-content" id="playersTab">
+                    <h2 class="tab-title">👥 Gestion des Joueurs</h2>
+                    <div class="search-section">
+                        <div class="search-bar">
+                            <input type="text" id="playerSearchInput" class="search-input" placeholder="🔍 Rechercher un joueur...">
+                            <button class="btn-icon" id="clearPlayerSearchBtn" title="Effacer la recherche" style="display: none;">✕</button>
+                        </div>
+                        <div class="filter-bar">
+                            <select id="playerFilterRole" class="filter-select">
+                                <option value="all">Tous les rôles</option>
+                                <option value="Duelist">Duelist</option>
+                                <option value="Initiator">Initiator</option>
+                                <option value="Controller">Controller</option>
+                                <option value="Sentinel">Sentinel</option>
+                            </select>
+                            <select id="playerFilterRank" class="filter-select">
+                                <option value="all">Tous les rangs</option>
+                                <option value="Iron">Iron</option>
+                                <option value="Bronze">Bronze</option>
+                                <option value="Silver">Silver</option>
+                                <option value="Gold">Gold</option>
+                                <option value="Platinum">Platinum</option>
+                                <option value="Diamond">Diamond</option>
+                                <option value="Ascendant">Ascendant</option>
+                                <option value="Immortal">Immortal</option>
+                                <option value="Radiant">Radiant</option>
+                            </select>
+                            <select id="playerFilterAgent" class="filter-select">
+                                <option value="all">Tous les agents</option>
+                            </select>
+                            <button class="btn-secondary" id="resetPlayerFiltersBtn">🔄 Réinitialiser</button>
+                        </div>
+                    </div>
+                    <div class="input-section">
+                    <h3>📝 Ajouter un Nouveau Joueur</h3>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Nom:</label>
+                            <input type="text" id="playerNameInput" placeholder="Nom du joueur">
+                        </div>
+                        <div class="input-group">
+                            <label>Agent:</label>
+                            <select id="playerAgentSelect"></select>
+                        </div>
+                        <div class="input-group">
+                            <label>Rôle:</label>
+                            <select id="playerRoleSelect">
+                                <option value="">Sélectionner...</option>
+                                <option value="Duelist">Duelist</option>
+                                <option value="Initiator">Initiator</option>
+                                <option value="Controller">Controller</option>
+                                <option value="Sentinel">Sentinel</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Rang:</label>
+                            <select id="playerRankSelect">
+                                <option value="">Sélectionner...</option>
+                                <option value="Iron">Iron</option>
+                                <option value="Bronze">Bronze</option>
+                                <option value="Silver">Silver</option>
+                                <option value="Gold">Gold</option>
+                                <option value="Platinum">Platinum</option>
+                                <option value="Diamond">Diamond</option>
+                                <option value="Ascendant">Ascendant</option>
+                                <option value="Immortal">Immortal</option>
+                                <option value="Radiant">Radiant</option>
+                            </select>
+                        </div>
+                        <button class="btn-primary" id="addPlayerBtn">➕ Ajouter Joueur</button>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-primary" id="editPlayerBtn">✏️ Modifier Joueur</button>
+                    <button class="btn-primary" id="deletePlayerBtn">🗑️ Supprimer Joueur</button>
+                    <button class="btn-primary" id="editAgentsBtn">🎯 Éditer Agents</button>
+                </div>
+                <div class="list-container">
+                    <div class="list-header">Liste des Joueurs</div>
+                    <div class="list-content" id="playersList"></div>
+                </div>
+                <div id="playerAgentsDisplay" class="player-agents-display" style="display: none;">
+                    <div class="player-agents-header">
+                        <h3 id="playerAgentsTitle">Agents par Map</h3>
+                    </div>
+                    <div class="player-agents-content" id="playerAgentsContent"></div>
+                </div>
+            </div>
+
+            <!-- Onglet Matchs -->
+            <div class="tab-content" id="matchesTab">
+                <h2 class="tab-title">📊 Gestion des Matchs</h2>
+                <div class="search-section">
+                    <div class="search-bar">
+                        <input type="text" id="matchSearchInput" class="search-input" placeholder="🔍 Rechercher un match...">
+                        <button class="btn-icon" id="clearMatchSearchBtn" title="Effacer la recherche" style="display: none;">✕</button>
+                    </div>
+                    <div class="filter-bar">
+                        <select id="matchFilterMap" class="filter-select">
+                            <option value="all">Toutes les maps</option>
+                        </select>
+                        <select id="matchFilterResult" class="filter-select">
+                            <option value="all">Tous les résultats</option>
+                            <option value="win">Victoires</option>
+                            <option value="loss">Défaites</option>
+                        </select>
+                        <input type="text" id="matchFilterOpponent" class="filter-input" placeholder="Adversaire...">
+                        <input type="date" id="matchFilterDateFrom" class="filter-input" placeholder="Date début">
+                        <input type="date" id="matchFilterDateTo" class="filter-input" placeholder="Date fin">
+                        <select id="matchSortBy" class="filter-select">
+                            <option value="date">Trier par date</option>
+                            <option value="map">Trier par map</option>
+                            <option value="opponent">Trier par adversaire</option>
+                            <option value="result">Trier par résultat</option>
+                        </select>
+                        <select id="matchSortOrder" class="filter-select">
+                            <option value="desc">Décroissant</option>
+                            <option value="asc">Croissant</option>
+                        </select>
+                        <button class="btn-secondary" id="resetMatchFiltersBtn">🔄 Réinitialiser</button>
+                    </div>
+                </div>
+                <div class="input-section">
+                    <h3>📝 Ajouter un Nouveau Match</h3>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Date:</label>
+                            <input type="text" id="matchDateInput" placeholder="dd-MM-aaaa">
+                        </div>
+                        <div class="input-group">
+                            <label>Map:</label>
+                            <select id="matchMapSelect"></select>
+                        </div>
+                        <div class="input-group">
+                            <label>Adversaire:</label>
+                            <input type="text" id="matchOpponentInput" placeholder="Nom de l'équipe">
+                        </div>
+                        <button class="btn-primary" id="addMatchBtn">➕ Ajouter Match</button>
+                        <button class="btn-primary" id="deleteMatchBtn">🗑️ Supprimer Sélectionné</button>
+                    </div>
+                </div>
+                <div class="list-container">
+                    <div class="list-header">📊 Historique des Matchs</div>
+                    <div class="list-content" id="matchesList"></div>
+                </div>
+            </div>
+
+            <!-- Onglet Statistiques -->
+            <div class="tab-content" id="statisticsTab">
+                <h2 class="tab-title">📈 Statistiques Complètes</h2>
+                <div class="stats-tabs">
+                    <button class="stats-tab-btn active" data-stats-tab="map">🗺️ Par Map</button>
+                    <button class="stats-tab-btn" data-stats-tab="rounds">🎯 Rounds Détaillés</button>
+                    <button class="stats-tab-btn" data-stats-tab="charts">📊 Graphiques</button>
+                    <!-- Onglet Insights fusionné dans Graphiques -->
+                    <div class="stats-actions" style="margin-left:auto; display:flex; gap:8px;">
+                        <select id="exportPlayerSelect" class="filter-select">
+                            <option value="all">Tous joueurs</option>
+                        </select>
+                        <select id="exportMapSelect" class="filter-select">
+                            <option value="all">Toutes maps</option>
+                        </select>
+                        <input type="date" id="exportFrom" class="filter-input">
+                        <input type="date" id="exportTo" class="filter-input">
+                        <div class="stats-export-options csv-chips" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            <span class="muted">Colonnes CSV:</span>
+                            <label class="csv-chip"><input type="checkbox" id="csvOptDate" checked><span>Date</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="csvOptMap" checked><span>Map</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="csvOptOpponent" checked><span>Adversaire</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="csvOptScore" checked><span>Score</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="csvOptResult" checked><span>Résultat</span></label>
+                        </div>
+                        <div class="section-options csv-chips" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            <span class="muted">Sections:</span>
+                            <label class="csv-chip"><input type="checkbox" id="pdfIncludeSummary" checked><span>Résumé</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="pdfIncludeMapStats" checked><span>Maps</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="pdfIncludeMatches" checked><span>Matchs</span></label>
+                        </div>
+                        <button class="btn-secondary" id="exportMapStatsCsvBtn">🗺️ Export Maps CSV</button>
+                        <button class="btn-secondary" id="exportPlayerStatsCsvBtn">👥 Export Joueurs CSV</button>
+                        <button class="btn-secondary" id="exportPeriodStatsCsvBtn">🗓️ Export Période CSV</button>
+                        <button class="btn-secondary" id="exportXmlBtn">🧩 Export XML</button>
+                        <button class="btn-secondary" id="importCsvBtn">📥 Import CSV</button>
+                        <button class="btn-primary" id="exportThemedHtmlBtn">🖨️ Rapport HTML (thème)</button>
+                        <button class="btn-primary" id="exportPdfBtn">🧾 Export PDF</button>
+                        <button class="btn-primary" id="exportExcelBtn">📊 Export Excel</button>
+                    </div>
+                </div>
+                <!-- Modale Import CSV -->
+                <div id="importCsvModal" class="modal hidden">
+                    <div class="modal-content">
+                        <span class="close" id="closeImportCsvModal">&times;</span>
+                        <h3>Import CSV — Matchs</h3>
+                        <p>Sélectionnez un fichier CSV avec les colonnes: Date, Map, Opponent, Score, Result</p>
+                        <input type="file" id="csvFileInput" accept=".csv,text/csv">
+                        <div id="csvPreview" class="table-container" style="max-height:300px; overflow:auto; margin-top:12px;"></div>
+                        <div class="modal-actions" style="margin-top:12px;">
+                            <button class="btn-secondary" id="cancelCsvImportBtn">Annuler</button>
+                            <button class="btn-primary" id="confirmCsvImportBtn" disabled>Importer</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-tab-content active" id="mapStatsTab">
+                        <div class="filters" id="mapFilters">
+                            <div class="filter-group">
+                                <label>Filtrer par:</label>
+                                <select id="mapFilterType">
+                                    <option value="all">Toutes les maps</option>
+                                    <option value="map">Map spécifique</option>
+                                    <option value="opponent">Adversaire spécifique</option>
+                                </select>
+                            </div>
+                            <div class="filter-group" id="mapFilterValueGroup" style="display: none;">
+                                <label>Valeur:</label>
+                                <select id="mapFilterValue"></select>
+                            </div>
+                            <button class="btn-secondary" id="applyMapFilterBtn">🔍 Appliquer</button>
+                            <button class="btn-secondary" id="resetMapFilterBtn">🔄 Réinitialiser</button>
+                        </div>
+                        <div class="stats-display" id="mapStatsDisplay"></div>
+                    </div>
+                    <div class="stats-tab-content" id="roundsStatsTab">
+                        <div class="filters" id="roundFilters">
+                            <div class="filter-group">
+                                <label>Filtrer par:</label>
+                                <select id="roundFilterType">
+                                    <option value="all">Tous les matchs</option>
+                                    <option value="map">Map spécifique</option>
+                                    <option value="opponent">Adversaire spécifique</option>
+                                </select>
+                            </div>
+                            <div class="filter-group" id="roundFilterValueGroup" style="display: none;">
+                                <label>Valeur:</label>
+                                <select id="roundFilterValue"></select>
+                            </div>
+                            <button class="btn-secondary" id="applyRoundFilterBtn">🔍 Appliquer</button>
+                            <button class="btn-secondary" id="resetRoundFilterBtn">🔄 Réinitialiser</button>
+                        </div>
+                        <div class="stats-display" id="roundsStatsDisplay"></div>
+                    </div>
+                    <div class="stats-tab-content" id="chartsStatsTab">
+                        <div class="charts-tabs" style="display:flex; gap:8px; margin-bottom:16px; border-bottom:1px solid var(--border-color);">
+                            <button class="charts-sub-tab-btn active" data-charts-sub-tab="general">📊 Généraux</button>
+                            <button class="charts-sub-tab-btn" data-charts-sub-tab="comparative">⚖️ Comparatifs par Équipe</button>
+                        </div>
+                        <div class="charts-sub-tab-content active" id="generalChartsTab">
+                            <div class="charts-buttons" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                <button class="btn-primary" id="winrateChartBtn">🏆 Graphique Victoires/Défaites</button>
+                                <button class="btn-primary" id="mapPerformanceChartBtn">🗺️ Performance par Map</button>
+                                <button class="btn-primary" id="roundsChartBtn">🎯 Statistiques des Rounds</button>
+                                <button class="btn-primary" id="timelineChartBtn">📅 Évolution Temporelle</button>
+                                <button class="btn-primary" id="agentsChartBtn">🎭 Utilisation des Agents</button>
+                                <span class="muted" style="margin-left:12px;">Période (mois):</span>
+                                <select id="chartsInsightsPeriod">
+                                    <option value="3">3</option>
+                                    <option value="6" selected>6</option>
+                                    <option value="12">12</option>
+                                    <option value="all">Tout</option>
+                                </select>
+                                <button class="btn-primary" id="bestMapChartBtn">🏟️ Meilleure map (WR)</button>
+                                <button class="btn-primary" id="topOpponentsChartBtn">👥 Top adversaires</button>
+                                <div style="margin-left:auto; display:flex; gap:8px;">
+                                    <button class="btn-secondary" id="downloadChartPngBtn">📷 Exporter le graphique (PNG)</button>
+                                </div>
+                            </div>
+                            <div class="chart-display" id="chartDisplay"></div>
+                        </div>
+                        <div class="charts-sub-tab-content" id="comparativeChartsTab" style="display:none;">
+                            <div class="comparative-charts-controls" style="margin-bottom:20px; padding:16px; background:var(--bg-secondary); border-radius:8px; border:1px solid var(--border-color);">
+                                <div style="display:flex; flex-direction:column; gap:12px;">
+                                    <div>
+                                        <label style="display:block; margin-bottom:8px; font-weight:600;">Sélectionner les équipes adverses à comparer:</label>
+                                        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                                            <select id="comparativeOpponentSelect" multiple style="min-width:250px; height:120px; padding:8px; background:var(--bg-tertiary); border:1px solid var(--border-color); border-radius:6px; color:var(--text-primary);">
+                                                <!-- Options seront remplies dynamiquement -->
+                                            </select>
+                                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                                <button class="btn-secondary" id="selectAllOpponentsBtn">✅ Tout sélectionner</button>
+                                                <button class="btn-secondary" id="deselectAllOpponentsBtn">❌ Tout désélectionner</button>
+                                            </div>
+                                        </div>
+                                        <small class="muted" style="display:block; margin-top:6px;">Maintenez Ctrl (Cmd sur Mac) pour sélectionner plusieurs équipes</small>
+                                    </div>
+                                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                        <label style="display:flex; align-items:center; gap:6px;">
+                                            Type de graphique:
+                                            <select id="comparativeChartType" class="modern-select" style="min-width:200px;">
+                                                <option value="winrate">🏆 Winrate Comparatif</option>
+                                                <option value="mapPerformance">🗺️ Performance par Map</option>
+                                                <option value="timeline">📅 Évolution Temporelle</option>
+                                                <option value="heatmap">🔥 Heatmap Performance</option>
+                                                <option value="radar">📡 Radar Comparatif</option>
+                                                <option value="scatter">📊 Dispersion (Score vs Date)</option>
+                                                <option value="pie">🥧 Répartition Victoires/Défaites</option>
+                                                <option value="sidePerformance">⚔️ Performance par Side (Att/Déf)</option>
+                                                <option value="scoreDistribution">📈 Distribution des Scores</option>
+                                                <option value="boxplot">📦 Box Plot des Scores</option>
+                                                <option value="stackedBar">📊 Barres Empilées (V/D par Map)</option>
+                                                <option value="area">📊 Aire (Winrate cumulé)</option>
+                                                <option value="sankey">🌊 Sankey - Transitions de Rounds</option>
+                                                <option value="radarPlayers">📡 Radar Multiples - Joueurs par Rôle</option>
+                                                <option value="clustering">🎯 Clustering - Profils de Joueurs</option>
+                                                <option value="waterfall">💧 Cascade - Évolution Score par Rounds</option>
+                                            </select>
+                                        </label>
+                                        <label id="waterfallMatchSelectLabel" style="display:none; align-items:center; gap:6px;">
+                                            Match:
+                                            <select id="waterfallMatchSelect" class="modern-select" style="min-width:250px;">
+                                                <option value="">Sélectionner un match...</option>
+                                            </select>
+                                        </label>
+                                        <button class="btn-primary" id="generateComparativeChartBtn">🎨 Générer le graphique</button>
+                                        <button class="btn-secondary" id="exportComparativeChartPngBtn">📷 Exporter (PNG)</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-display" id="comparativeChartDisplay"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Comparaison -->
+            <div class="tab-content" id="comparisonTab">
+                <h2 class="tab-title">⚖️ Comparaison d'Équipes</h2>
+                <p class="tab-description">Comparez votre équipe actuelle avec une autre (import JSON) sur des indicateurs clés.</p>
+                <div class="form-row" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px;">
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label>Équipe A (courante)</label>
+                        <input type="text" id="comparisonTeamAName" class="input-field" disabled>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label>Équipe B (import JSON)</label>
+                        <input type="file" id="comparisonTeamBFile" accept=".json,application/json" style="display:none;">
+                        <button class="btn-secondary" id="openComparisonFilePickerBtn">📥 Importer une équipe</button>
+                    </div>
+                    <button class="btn-secondary" id="clearComparisonBtn">🧹 Réinitialiser</button>
+                    <!-- Ligne options + actions export -->
+                    <div style="flex-basis:100%; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-top:6px;">
+                        <div class="comparison-export-options csv-chips" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            <span class="muted">Colonnes:</span>
+                            <label class="csv-chip"><input type="checkbox" id="compOptPlayers" checked><span>Joueurs</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="compOptMatches" checked><span>Matchs</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="compOptWins" checked><span>Victoires</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="compOptDefeats" checked><span>Défaites</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="compOptWinrate" checked><span>Winrate</span></label>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <button class="btn-secondary" id="exportComparisonCsvBtn">📄 Export CSV</button>
+                            <button class="btn-secondary" id="exportComparisonHtmlBtn">🖨️ Export HTML</button>
+                            <button class="btn-primary" id="exportComparisonPdfBtn">🧾 Export PDF</button>
+                            <button class="btn-primary" id="exportComparisonExcelBtn">📊 Export Excel</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:12px;">
+                    <div class="card">
+                        <h3>Résumé — Équipe A</h3>
+                        <div id="comparisonTeamACard"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Résumé — Équipe B</h3>
+                        <div id="comparisonTeamBCard"></div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:12px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                            <h3 style="margin:0;">Graphique comparatif</h3>
+                            <label style="display:flex; align-items:center; gap:6px;">
+                                Type de graphique:
+                                <select id="comparisonChartType" class="modern-select" style="min-width:220px;">
+                                    <option value="grouped">📊 Barres groupées</option>
+                                    <option value="stacked">📊 Barres empilées</option>
+                                    <option value="radar">📡 Radar</option>
+                                    <option value="winrate">🏆 Winrate Comparatif</option>
+                                    <option value="mapPerformance">🗺️ Performance par Map</option>
+                                    <option value="timeline">📅 Évolution Temporelle</option>
+                                    <option value="heatmap">🔥 Heatmap Performance</option>
+                                    <option value="scoreDistribution">📈 Distribution des Scores</option>
+                                    <option value="boxplot">📦 Box Plot des Scores</option>
+                                    <option value="stackedBar">📊 Barres Empilées par Map</option>
+                                    <option value="area">📊 Aire (Winrate cumulé)</option>
+                                    <option value="pie">🥧 Répartition Victoires/Défaites</option>
+                                </select>
+                            </label>
+                            <label id="comparisonWaterfallMatchLabel" style="display:none; align-items:center; gap:6px;">
+                                Match (Équipe A):
+                                <select id="comparisonWaterfallMatchSelectA" class="modern-select" style="min-width:250px;">
+                                    <option value="">Sélectionner un match...</option>
+                                </select>
+                            </label>
+                            <label id="comparisonWaterfallMatchLabelB" style="display:none; align-items:center; gap:6px;">
+                                Match (Équipe B):
+                                <select id="comparisonWaterfallMatchSelectB" class="modern-select" style="min-width:250px;">
+                                    <option value="">Sélectionner un match...</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div>
+                            <button class="btn-secondary" id="downloadComparisonChartPngBtn">📷 Exporter (PNG)</button>
+                        </div>
+                    </div>
+                    <div id="comparisonChart" style="height:500px; min-height:400px;"></div>
+                </div>
+            </div>
+
+                <!-- Onglet Progression -->
+                <div class="tab-content" id="progressionTab">
+                    <h2 class="tab-title">🎯 Suivi de Progression Personnel</h2>
+                    <p class="tab-description">Suivez vos performances match par match avec une analyse détaillée de vos points forts et axes d'amélioration</p>
+                    <div class="action-buttons">
+                        <button class="btn-primary" id="addProgressionBtn">➕ Ajouter une Session</button>
+                        <button class="btn-primary" id="deleteProgressionBtn">🗑️ Supprimer Session</button>
+                    </div>
+                    <div class="list-container">
+                        <div class="list-header">📊 Historique des Sessions</div>
+                        <div class="list-content" id="progressionList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Modales -->
+    <div id="playerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="playerModalTitle">Ajouter un Joueur</h3>
+                <button class="modal-close" id="playerModalClose">×</button>
+            </div>
+            <div class="modal-body" id="playerModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Modal OCR Scoreboard -->
+    <div id="ocrModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>🧠 Import Scoreboard via OCR</h3>
+                <button class="modal-close" id="closeOcrModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row" style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start;">
+                    <div style="min-width:280px; flex:1;">
+                        <label class="filter-label">Image du scoreboard</label>
+                        <div id="ocrDropZone" class="drop-zone" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:14px; border:1px dashed var(--border-color); border-radius:8px;">
+                            <input type="file" id="ocrFileInput" accept="image/*" style="display:none;">
+                            <p class="muted" style="margin:0;">Glissez-déposez une image ici</p>
+                            <button class="btn-secondary" id="ocrChooseBtn" type="button">Choisir un fichier</button>
+                        </div>
+                        <canvas id="ocrPreviewCanvas" style="width:100%; max-height:280px; margin-top:8px; border:1px dashed var(--border-color); border-radius:8px;"></canvas>
+                        <div class="small muted" style="margin-top:8px;">
+                            Astuce: utilisez une capture nette (≥ 1080p), HUD non masqué.
+                        </div>
+                    </div>
+                    <div style="min-width:280px; flex:1;">
+                        <label class="filter-label">Options</label>
+                        <div class="csv-chips" style="display:flex; flex-wrap:wrap; gap:8px;">
+                            <label class="csv-chip"><input type="checkbox" id="ocrEnhanceContrast" checked><span>Contraste</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="ocrGrayscale" checked><span>Niveaux de gris</span></label>
+                            <label class="csv-chip"><input type="checkbox" id="ocrDenoise" checked><span>Denoise</span></label>
+                        </div>
+                        <div style="margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <label class="filter-label" style="margin:0;">Seuil (binarisation):</label>
+                            <input type="range" id="ocrThreshold" min="0" max="255" value="0" style="width:180px;">
+                            <span class="muted" id="ocrThresholdVal">auto</span>
+                        </div>
+                        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                            <label style="display:flex; align-items:center; gap:6px;">
+                                Langue:
+                                <select id="ocrLocale" class="input-field" style="min-width:140px;">
+                                    <option value="eng" selected>eng</option>
+                                    <option value="fra">fra</option>
+                                </select>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px;">
+                                Gabarit:
+                                <select id="ocrTemplate" class="input-field" style="min-width:160px;">
+                                    <option value="auto" selected>Auto</option>
+                                    <option value="valorant_ingame">Valorant (in‑game)</option>
+                                    <option value="valorant_postmatch">Valorant (post‑match)</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="btn-primary" id="ocrRunBtn">Exécuter l’OCR</button>
+                            <button class="btn-secondary" id="ocrMapBtn" disabled>Mapper vers les champs</button>
+                            <button class="btn-secondary" id="ocrPrefillMatchBtn" disabled>Préremplir le match</button>
+                            <button class="btn-secondary" id="ocrClearBtn">Effacer</button>
+                        </div>
+                        <div class="small muted" style="margin-top:6px;">Astuce: vous pouvez glisser la souris sur l’aperçu pour sélectionner une zone (ROI) spécifique à OCR.</div>
+                    </div>
+                </div>
+                <div style="margin-top:12px;">
+                    <label class="filter-label">Résultat (JSON)</label>
+                    <textarea id="ocrResultText" rows="10" style="width:100%; resize:vertical; font-family:monospace;"></textarea>
+                </div>
+                <div class="small muted" id="ocrHint" style="margin-top:8px;">
+                    Étapes: chargez l’image → Exécuter l’OCR → vérifiez/éditez le JSON → “Mapper”.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="matchModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="matchModalTitle">Éditeur de Match</h3>
+                <button class="modal-close" id="matchModalClose">×</button>
+            </div>
+            <div class="modal-body" id="matchModalBody"></div>
+        </div>
+    </div>
+
+    <div id="progressionModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>➕ Ajouter une Session de Progression</h3>
+                <button class="modal-close" id="progressionModalClose">×</button>
+            </div>
+            <div class="modal-body" id="progressionModalBody"></div>
+        </div>
+    </div>
+
+    <div id="agentsModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>🎯 Configuration des Agents par Map</h3>
+                <button class="modal-close" id="agentsModalClose">×</button>
+            </div>
+            <div class="modal-body" id="agentsModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Modal Sauvegardes -->
+    <div id="backupModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>💾 Gestion des Sauvegardes</h3>
+                <button class="modal-close" id="backupModalClose">×</button>
+            </div>
+            <div class="modal-body" id="backupModalBody">
+                <div class="backup-stats" id="backupStats"></div>
+                <div class="backup-actions">
+                    <button class="btn-primary" id="createBackupBtn">➕ Créer une Sauvegarde</button>
+                    <button class="btn-secondary" id="exportBackupsBtn">📤 Exporter les Sauvegardes</button>
+                    <button class="btn-secondary" id="importBackupsBtn">📥 Importer des Sauvegardes</button>
+                            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-left:auto;">
+                                <label for="backupSelect" class="muted">Restaurer:</label>
+                                <select id="backupSelect" class="input-field" style="min-width:240px;"></select>
+                                <button class="btn-danger" id="restoreBackupBtn">♻️ Restaurer</button>
+                            </div>
+                    <button class="btn-danger" id="clearBackupsBtn">🗑️ Supprimer Toutes les Sauvegardes</button>
+                </div>
+                <div class="backup-list" id="backupList">
+                    <h4>Historique des Sauvegardes</h4>
+                    <div id="backupListContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Raccourcis Clavier -->
+    <div id="shortcutsModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>⌨️ Raccourcis Clavier</h3>
+                <button class="modal-close" id="shortcutsModalClose">×</button>
+            </div>
+            <div class="modal-body" id="shortcutsModalBody">
+                <p style="margin-bottom: 20px; color: var(--text-secondary);">
+                    Utilisez ces raccourcis clavier pour naviguer rapidement dans l'application.
+                </p>
+                <div id="shortcutsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thème -->
+    <div id="themeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎨 Personnalisation du Thème</h3>
+                <button class="modal-close" id="themeModalClose">×</button>
+            </div>
+            <div class="modal-body" id="themeModalBody">
+                <div class="form-group">
+                    <label>Thème prédéfini:</label>
+                    <select id="themeSelect" class="input-field">
+                        <option value="default">Valorant Rouge</option>
+                        <option value="blue">Bleu Électrique</option>
+                        <option value="green">Vert Toxique</option>
+                        <option value="purple">Violet Mystique</option>
+                        <option value="orange">Orange Flamboyant</option>
+                        <option value="custom">Personnalisé</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customColorGroup" style="display: none;">
+                    <label>Couleur d'accent personnalisée:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="color" id="customAccentColor" class="input-field" style="width: 80px; height: 40px; padding: 0; border: none; cursor: pointer;">
+                        <input type="text" id="customAccentColorText" class="input-field" placeholder="#ff4655" style="flex: 1;">
+                    </div>
+                </div>
+                        <hr style="border-color: var(--border-color); opacity:.3; margin: 10px 0;">
+                        <div class="form-row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                            <label style="min-width:140px;">Thèmes sauvegardés:</label>
+                            <select id="savedThemesSelect" class="input-field" style="min-width:220px; flex:1;"></select>
+                            <button class="btn-secondary" id="applySavedThemeBtn">Appliquer</button>
+                            <button class="btn-danger" id="deleteSavedThemeBtn">Supprimer</button>
+                        </div>
+                        <div class="form-row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:8px;">
+                            <input type="text" id="saveThemeNameInput" class="input-field" placeholder="Nom du thème..." style="min-width:220px; flex:1;">
+                            <button class="btn-secondary" id="saveThemeBtn">💾 Sauvegarder</button>
+                            <button class="btn-secondary" id="exportThemeBtn">📤 Exporter</button>
+                            <input type="file" id="importThemeFile" accept="application/json" style="display:none;">
+                            <button class="btn-secondary" id="importThemeBtn">📥 Importer</button>
+                </div>
+                <div class="theme-preview" id="themePreview" style="margin-top: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 8px; border: 2px solid var(--accent-color);">
+                    <p style="color: var(--accent-color); font-weight: bold;">Aperçu du thème</p>
+                    <p style="color: var(--text-primary);">Texte principal</p>
+                    <p style="color: var(--text-secondary);">Texte secondaire</p>
+                    <button style="padding: 8px 16px; background: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">Bouton d'exemple</button>
+                </div>
+                <div class="modal-actions" style="margin-top: 20px;">
+                    <button class="btn-primary" id="applyThemeBtn">✅ Appliquer</button>
+                    <button class="btn-secondary" id="resetThemeBtn">🔄 Réinitialiser</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+            <!-- Modal Sécurité -->
+            <div id="securityModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>🔒 Sécurité & Chiffrement local</h3>
+                        <button class="modal-close" id="securityModalClose">×</button>
+                    </div>
+                    <div class="modal-body" id="securityModalBody">
+                        <p class="tab-description">Définissez une phrase secrète pour chiffrer localement vos sauvegardes automatiques (AES‑256 GCM). Gardez-la en sécurité — elle n’est pas récupérable.</p>
+                        <div class="form-group">
+                            <label>Phrase secrète:</label>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <input type="password" id="securityPassphrase" class="input-field" placeholder="••••••••">
+                                <button id="togglePassVisibility" class="btn-secondary">👁️</button>
+                            </div>
+                            <small id="securityStrength" class="muted"></small>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-primary" id="saveSecurityBtn">💾 Enregistrer</button>
+                        <button class="btn-danger" id="clearPassphraseBtn">🧹 Supprimer la phrase</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Notifications -->
+            <div id="notificationSettingsModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>🔔 Préférences de notifications</h3>
+                        <button class="modal-close" id="closeNotificationSettingsModal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group"><label><input type="checkbox" id="notifEnabled"> Activer les notifications</label></div>
+                        <div class="form-group"><label><input type="checkbox" id="notifProgress"> Alertes de progression</label></div>
+                        <div class="form-group"><label><input type="checkbox" id="notifPerformance"> Alertes de performance</label></div>
+                        <div class="form-group"><label><input type="checkbox" id="notifMatchReminders"> Rappels de matchs</label></div>
+                        <div class="form-group"><label><input type="checkbox" id="notifSound"> Son</label></div>
+                        <hr style="border-color: var(--border-color); opacity:.3; margin: 10px 0;">
+                        <div class="form-row" style="display:flex; gap:12px; flex-wrap:wrap;">
+                            <div class="form-group" style="min-width:220px;">
+                                <label>Seuil variation winrate (progression) [%]</label>
+                                <input type="number" id="notifWinrateThreshold" class="input-field" value="10" min="1" max="100" step="1">
+                            </div>
+                            <div class="form-group" style="min-width:220px;">
+                                <label>Seuil agent: winrate minimal [%]</label>
+                                <input type="number" id="notifAgentMinWinrate" class="input-field" value="40" min="0" max="100" step="1">
+                            </div>
+                            <div class="form-group" style="min-width:220px;">
+                                <label>Seuil agent: matchs minimum</label>
+                                <input type="number" id="notifAgentMinMatches" class="input-field" value="3" min="0" max="100" step="1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" id="cancelNotificationSettingsBtn">Fermer</button>
+                        <button class="btn-primary" id="saveNotificationSettingsBtn">Enregistrer</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Logs -->
+            <div id="logsModal" class="modal">
+                <div class="modal-content large">
+                    <div class="modal-header">
+                        <h3>🧾 Journal des événements</h3>
+                        <button class="modal-close" id="closeLogsModal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="logsContainer" class="table-container" style="max-height: 400px; overflow:auto;"></div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" id="clearLogsBtn">Vider</button>
+                        <button class="btn-primary" id="exportLogsBtn">Exporter JSON</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Alertes -->
+            <div id="alertsModal" class="modal">
+                <div class="modal-content large">
+                    <div class="modal-header">
+                        <h3>📢 Journal des alertes</h3>
+                        <button class="modal-close" id="closeAlertsModal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="alertsContainer" class="table-container" style="max-height:400px; overflow:auto;"></div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" id="clearAlertsBtn">Vider</button>
+                        <button class="btn-primary" id="exportAlertsBtn">Exporter JSON</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Métriques -->
+            <div id="metricsModal" class="modal">
+                <div class="modal-content large">
+                    <div class="modal-header">
+                        <h3>📈 Métriques d’usage</h3>
+                        <button class="modal-close" id="closeMetricsModal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="metricsSummary" class="table-container" style="margin-bottom:12px;"></div>
+                        <div id="metricsContainer" class="table-container" style="max-height:400px; overflow:auto;"></div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" id="resetMetricsBtn">Réinitialiser</button>
+                        <button class="btn-primary" id="exportMetricsBtn">Exporter JSON</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Profils -->
+            <div id="profilesModal" class="modal">
+                <div class="modal-content large">
+                    <div class="modal-header">
+                        <h3>👤 Profils</h3>
+                        <button class="modal-close" id="closeProfilesModal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+                            <label style="min-width:120px;">Sélectionner:</label>
+                            <select id="profilesSelect" class="input-field" style="min-width:240px; flex:1;"></select>
+                            <button class="btn-secondary" id="applyProfileBtn">Appliquer</button>
+                            <button class="btn-danger" id="deleteProfileBtn">Supprimer</button>
+                        </div>
+                        <div class="form-row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                            <input type="text" id="newProfileNameInput" class="input-field" placeholder="Nom du nouveau profil..." style="min-width:240px; flex:1;">
+                            <button class="btn-primary" id="saveCurrentAsProfileBtn">💾 Sauvegarder le profil courant</button>
+                            <button class="btn-secondary" id="exportProfileBtn">📤 Exporter</button>
+                            <input type="file" id="importProfileFile" accept="application/json" style="display:none;">
+                            <button class="btn-secondary" id="importProfileBtn">📥 Importer</button>
+                        </div>
+                        <div class="table-container" id="profilesInfo" style="margin-top:12px;"></div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" id="closeProfilesBtn">Fermer</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal de gestion du chemin de fichier -->
+            <div id="filePathModal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 700px;">
+                    <div class="modal-header">
+                        <h3>📂 Gestion du fichier d'équipe</h3>
+                        <button class="modal-close" id="filePathModalClose">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="currentTeamPath">Chemin actuel du fichier d'équipe:</label>
+                            <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
+                                <input type="text" id="currentTeamPath" class="input-field" readonly style="flex: 1; background-color: var(--bg-secondary);">
+                                <button class="btn-secondary" id="browseTeamPathBtn">📁 Parcourir</button>
+                            </div>
+                        </div>
+                        
+                        <div id="filePathStatus" class="file-path-status" style="margin-top: 15px; padding: 12px; border-radius: 6px; background-color: var(--bg-secondary);">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="filePathStatusIcon">⏳</span>
+                                <span id="filePathStatusText">Vérification en cours...</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label>Informations du fichier:</label>
+                            <div id="filePathInfo" class="file-path-info" style="margin-top: 8px; padding: 12px; border-radius: 6px; background-color: var(--bg-secondary); font-size: 0.9em; line-height: 1.6;">
+                                <div>Nom de l'équipe: <span id="fileTeamName" class="muted">-</span></div>
+                                <div>Nombre de joueurs: <span id="filePlayersCount" class="muted">-</span></div>
+                                <div>Nombre de matchs: <span id="fileMatchesCount" class="muted">-</span></div>
+                                <div>Dernière modification: <span id="fileLastModified" class="muted">-</span></div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                            <button class="btn-secondary" id="validateFileBtn" style="width: 100%;">✅ Valider et recharger le fichier</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Script inline pour définir la classe Team minimale si nécessaire -->
+            <script>
+                // Définir une classe Team minimale si elle n'existe pas déjà
+                if (typeof window.Team === 'undefined') {
+                    window.Team = class Team {
+                        constructor(name) {
+                            this.name = name;
+                            this.players = [];
+                            this.matches = [];
+                            this.progression_entries = [];
+                        }
+                        
+                        toJSON() {
+                            return {
+                                name: this.name,
+                                players: this.players,
+                                matches: this.matches,
+                                progression_entries: this.progression_entries
+                            };
+                        }
+                    };
+                    console.log('Classe Team minimale définie');
+                }
+            </script>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
+

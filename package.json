@@ -1,0 +1,65 @@
+{
+  "name": "valorant-team-manager",
+  "version": "1.0.0",
+  "description": "Gestionnaire d'équipe Valorant avec statistiques et progression",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:dir": "electron-builder --dir"
+  },
+  "keywords": [
+    "valorant",
+    "team",
+    "manager",
+    "statistics"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0"
+  },
+  "build": {
+    "appId": "com.valorantteammanager.electron",
+    "productName": "Valorant Team Manager",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "renderer.js",
+      "index.html",
+      "overlay.html",
+      "styles.css",
+      "package.json",
+      "js/**/*",
+      "assets/**/*",
+      "Data/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "sign": false,
+      "signingHashAlgorithms": [],
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
