@@ -59,7 +59,7 @@ async function loadConfig() {
         return config;
       }
       // Si la config n'est pas valide, retourner un objet vide au lieu de null
-      console.log('Configuration invalide, retour d\'un objet vide');
+      console.log('Configuration invalidee, retour d\'un objet vide');
       return {};
     }
   } catch (err) {

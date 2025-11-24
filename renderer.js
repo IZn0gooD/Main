@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderTutorialsTab();
         renderStrategyTab();
     } catch (e) {
-        console.warn('Rendu tutoriels/stratégie non critique:', e);
+        console.warn('Rendu tutoriels/stratégies non critiques:', e);
     }
 
     // Programmer les rappels de matchs
